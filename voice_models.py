@@ -541,7 +541,7 @@ def tts_endpoint():
     try:
         # 1. 获取参数
         text = request.form.get('text')
-        audio_url = request.form.get('audio_url')  # 改为audio_url更明确
+        audio_url = request.form.get('audio_url')
         reference_text = request.form.get('reference_text', "希望你以后能够做的比我还好呦。")
         stream = request.form.get('stream', 'false').lower() == 'true'
 
