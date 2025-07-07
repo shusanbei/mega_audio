@@ -1,0 +1,7 @@
+/.DS_Store
+/.env
+/.idea
+/pretrained_models/*
+!/pretrained_models/.gitkeep
+/output/*
+!/output/.gitkeep
