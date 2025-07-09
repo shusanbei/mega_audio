@@ -16,7 +16,7 @@ app = Flask(__name__)
 executor = ThreadPoolExecutor(max_workers=2)
 
 # 初始化语音处理器
-processor = get_voice_processor()
+# processor = get_voice_processor()
 
 # 初始化MinIO客户端
 env = Env()
@@ -43,6 +43,7 @@ def asr_endpoint():
 
     """
     try:
+        processor = get_voice_processor()
         temp_path = None
 
         if 'audio_url' in request.form:
@@ -123,13 +124,14 @@ def tts_endpoint():
                 response = requests.get(audio_url, stream=True)
                 response.raise_for_status()
                 temp_path = os.path.join(
-                    processor.temp_dir,
+                    # processor.temp_dir,
                     f"tts_ref_{datetime.now().strftime('%Y%m%d_%H%M%S')}.wav"
                 )
                 with open(temp_path, 'wb') as f:
                     for chunk in response.iter_content(chunk_size=8192):
                         f.write(chunk)
                 print(f"文件已下载: {temp_path}")
+                print(f"使用音频克隆: {temp_path}")
             except requests.exceptions.RequestException as e:
                 return jsonify({
                     "success": False,
@@ -198,4 +200,10 @@ def tts_endpoint():
 
     except Exception as e:
         print(f"TTS接口异常: {e}")
+        if temp_path != DEFAULT_AUDIO:
+            try:
+                os.remove(temp_path)
+                print(f"已删除异常文件: {temp_path}")
+            except Exception as e:
+                print(f"删除异常文件失败: {e}")
         return jsonify({"success": False, "error": str(e)}), 500

@@ -1,7 +1,26 @@
+# macOS
 /.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyc
+.pytest_cache/
+
+# Environment
 /.env
+
+# IDE
 /.idea
+
+# Models
 /pretrained_models/*
 !/pretrained_models/.gitkeep
+
+# Output
 /output/*
 !/output/.gitkeep
+
+/back.py
