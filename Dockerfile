@@ -1,5 +1,5 @@
 # 构建阶段
-FROM python:3.11.11-slim-bookworm AS builder
+FROM continuumio/miniconda3:latest AS builder
 
 # 设置工作目录
 WORKDIR /build
@@ -34,7 +34,6 @@ ENV PATH="/opt/conda/bin:$PATH"
 # 创建 Conda 环境并安装依赖
 # 1. 创建基础环境
 # 创建 Conda 环境
-# 创建 Conda 环境
 RUN conda create -y -n app_env python=3.10
 
 # 配置 conda
@@ -48,28 +47,44 @@ RUN /opt/conda/bin/conda install -y -n app_env -c conda-forge pynini=2.1.5
 # 安装其他 pip 包
 RUN /opt/conda/envs/app_env/bin/pip install --no-cache-dir -r requirements.txt
 
+# 复制 whl 包到镜像
+COPY ttsfrd_dependency-0.1-py3-none-any.whl .
+COPY ttsfrd-0.4.2-cp310-cp310-linux_x86_64.whl .
+
+# 安装这两个 whl 包（在 pip install requirements.txt 之后）
+RUN /opt/conda/envs/app_env/bin/pip install --no-cache-dir ttsfrd_dependency-0.1-py3-none-any.whl \
+    && /opt/conda/envs/app_env/bin/pip install --no-cache-dir ttsfrd-0.4.2-cp310-cp310-linux_x86_64.whl
+
 # 运行阶段
-FROM python:3.11.11-slim-bookworm
+FROM continuumio/miniconda3:latest
 
 LABEL maintainer="purui7"
 WORKDIR /app
 
-# 直接复制固定名称的 Conda 环境
-COPY --from=builder /opt/conda/envs/app_env /opt/conda/envs/app_env
-ENV PATH="/opt/conda/envs/app_env/bin:$PATH"
+# 复制整个conda安装和环境
+COPY --from=builder /opt/conda /opt/conda
+ENV PATH="/opt/conda/envs/app_env/bin:$PATH" \
+    CONDA_DEFAULT_ENV=app_env \
+    CONDA_PREFIX=/opt/conda/envs/app_env
 
 # 安全配置
-RUN useradd -m appuser && chown -R appuser:appuser /app
+RUN useradd -m appuser && \
+    chown -R appuser:appuser /app && \
+    chown -R appuser:appuser /opt/conda
 USER appuser
+
+# 初始化conda环境
+RUN echo "source /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc && \
+    conda init bash
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app
 
-COPY . /app/
+COPY --chown=appuser:appuser . /app/
 EXPOSE 15012
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import requests; exit(0 if requests.get('http://localhost:15012').ok else 1)"
+    CMD curl -f http://localhost:15012 || exit 1
 
-CMD ["/opt/conda/envs/app_env/bin/python", "-m", "flask", "--app", "app/api.py", "run", "--host=0.0.0.0", "--port=15012"]
+CMD ["/opt/conda/envs/app_env/bin/python", "-m", "flask", "--app", "main.py", "run", "--host=0.0.0.0", "--port=15012"]

@@ -141,6 +141,7 @@ def tts_endpoint():
             print(f"使用默认音频: {DEFAULT_AUDIO}")
 
         if stream:
+            # 使用流式处理器实例
             processor = get_voice_processor(stream=True)
             audio_stream = processor.process_tts(text, temp_path, None, reference_text, stream)
             if temp_path != DEFAULT_AUDIO:
@@ -167,14 +168,17 @@ def tts_endpoint():
                 with open(result["output_path"], 'rb') as audio_file:
                     audio_data = audio_file.read()
                     audio_base64 = base64.b64encode(audio_data).decode('utf-8')
-                    minio_path = f"{endpoint}/cool/27/temp1.wav"
+                    timestamp = datetime.now().strftime('%Y%m%d/%H%M%S')
+                    object_name = f"{timestamp}.wav"
+                    bucket_name = env.str('MINIO_BUCKET')
+                    minio_path = f"{endpoint}/{bucket_name}/{object_name}"
                     file = minio.upload_file(
-                        bucket_name='cool',
-                        object_name='27/temp1.wav',
+                        bucket_name=bucket_name,
+                        object_name=object_name,
                         file_path=result["output_path"],
                         content_type='wav'
                     )
-                    print(minio_path)
+                    print(f"音频已保存到minio: {minio_path}")
 
                 output_dir = 'output'
                 os.makedirs(output_dir, exist_ok=True)
@@ -192,7 +196,6 @@ def tts_endpoint():
                     "success": True, 
                     "audio_base64": audio_base64,
                     "minio_path": minio_path,
-                    "error": None
                 })
             else:
                 print(f"TTS处理失败: {result}")

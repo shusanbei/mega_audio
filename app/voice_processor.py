@@ -3,6 +3,8 @@ from cosyvoice.cli.cosyvoice import CosyVoice2
 from cosyvoice.utils.file_utils import load_wav
 import torchaudio
 import os
+import subprocess
+import sys
 from typing import Optional, Dict, Any, Union
 import base64
 from datetime import datetime
@@ -10,6 +12,20 @@ import torch
 import gc
 import tempfile
 import shutil
+
+def download_model(model_type: str):
+    """下载指定类型的模型"""
+    try:
+        print(f"正在下载{model_type}模型...")
+        cmd = [sys.executable, "model_download.py"]
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = process.communicate()
+        if process.returncode != 0:
+            raise RuntimeError(f"模型下载失败: {stderr.decode('utf-8')}")
+        print(f"{model_type}模型下载完成")
+    except Exception as e:
+        print(f"模型下载过程中出错: {str(e)}")
+        raise
 
 class VoiceASR:
     def __init__(self, asr_model_dir: str = "pretrained_models/SenseVoiceSmall"):
@@ -23,7 +39,10 @@ class VoiceASR:
         print(f"正在加载ASR模型: {asr_model_dir}")
         try:
             if not os.path.exists(asr_model_dir):
-                raise FileNotFoundError(f"ASR模型目录不存在: {asr_model_dir}")
+                print("ASR模型不存在，尝试自动下载...")
+                download_model("SenseVoiceSmall")
+                if not os.path.exists(asr_model_dir):
+                    raise FileNotFoundError(f"ASR模型目录不存在且下载失败: {asr_model_dir}")
             
             self.asr_model = AutoModel(
                 model=asr_model_dir,
@@ -89,7 +108,10 @@ class VoiceTTS:
         print(f"正在加载TTS模型: {tts_model_dir}")
         try:
             if not os.path.exists(tts_model_dir):
-                raise FileNotFoundError(f"TTS模型目录不存在: {tts_model_dir}")
+                print("TTS模型不存在，尝试自动下载...")
+                download_model("CosyVoice2-0.5B")
+                if not os.path.exists(tts_model_dir):
+                    raise FileNotFoundError(f"TTS模型目录不存在且下载失败: {tts_model_dir}")
             
             self.tts_model = CosyVoice2(
                 tts_model_dir, 
@@ -258,4 +280,3 @@ class VoiceProcessor:
         if output_path is None:
             output_path = os.path.join(self.temp_dir, f"tts_{datetime.now().strftime('%Y%m%d_%H%M%S')}.wav")
         return self.tts.process(text, audio_file_path_tts, output_path, reference_text)
-
