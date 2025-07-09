@@ -37,6 +37,10 @@ def asr_endpoint():
     """
     ASR处理接口
     接收音频文件或音频URL，返回识别结果
+
+    参数：
+    - audio_url: 音频文件的URL（可选）
+
     """
     try:
         temp_path = None
@@ -93,6 +97,13 @@ def tts_endpoint():
     """
     TTS处理接口
     接收文本和音频文件或音频URL，返回合成的音频
+
+    参数：
+    - text: 要合成的文本
+    - audio_url: 可选的音频文件URL，用于参考音频
+    - reference_text: 可选的参考文本，用于零-shot语音合成
+    - stream: 是否使用流式处理（默认为false）
+
     """
     try:
         text = request.form.get('text')
