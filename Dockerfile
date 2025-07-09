@@ -72,4 +72,4 @@ EXPOSE 15012
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD python -c "import requests; exit(0 if requests.get('http://localhost:15012').ok else 1)"
 
-CMD ["/opt/conda/envs/app_env/bin/python", "-m", "flask", "--app", "voice_models.py", "run", "--host=0.0.0.0", "--port=15012"]
+CMD ["/opt/conda/envs/app_env/bin/python", "-m", "flask", "--app", "app/api.py", "run", "--host=0.0.0.0", "--port=15012"]
