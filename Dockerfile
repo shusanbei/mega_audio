@@ -77,6 +77,9 @@ ENV PATH="/opt/conda/envs/app_env/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
     PYTHONPATH="/app"
 
+RUN /opt/conda/envs/app_env/bin/pip install peft -i https://pypi.tuna.tsinghua.edu.cn/simple
+
+
 # 复制应用代码
 COPY . /app/
 

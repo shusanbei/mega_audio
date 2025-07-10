@@ -25,3 +25,4 @@ __pycache__/
 !/output/.gitkeep
 
 /back.py
+/docker-compose.yml
