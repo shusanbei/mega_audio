@@ -3,7 +3,10 @@ version: '3.8'
 services:
   # audio应用服务
   audio-app:
-    image: shusanbei/mega-audio:1.0.0
+    # image: shusanbei/mega-audio:1.0.0
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: audio-app
     restart: always
     ports:
@@ -11,18 +14,18 @@ services:
     environment:
       - TZ=Asia/Shanghai
       - MINIO_ADDRESS=x.x.x.x:9000
-      - MINIO_ACCESS_KEY=minioadmin
-      - MINIO_SECRET_KEY=minioadmin
+      - MINIO_ACCESS_KEY=your_access_name
+      - MINIO_SECRET_KEY=your_seccret_name
       - MINIO_SECURE=false
-      - MINIO_BUCKET=audio
+      - MINIO_BUCKET=your_bucket_name
     # 添加目录挂载配置
     volumes:
       - ./pretrained_models:/app/pretrained_models  # 宿主机当前目录的pretrained_models挂载到容器内对应路径
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
-      - rag-network
+      - audio-network
 
 networks:
-  rag-network:
+  audio-network:
     driver: bridge
